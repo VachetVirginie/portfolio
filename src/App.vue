@@ -1,22 +1,28 @@
 <template>
-  <div id="app">
+  <div ref="appContainer" id="app">
     <ParticlesBackground />
     <!-- Navigation -->
     <AppNavigation />
     
     <!-- Main Content -->
     <main id="main-content">
-      <HeroSection v-scroll-reveal="{ direction: 'fade', duration: 1.2 }" />
+      <section id="hero">
+        <HeroSection v-scroll-reveal="{ direction: 'fade', duration: 1.2 }" />
+      </section>
       
       <!-- Séparateur entre sections -->
       <AnimatedSectionDivider type="gradient" height="medium" />
       
-      <AboutSection v-scroll-reveal="{ direction: 'up', distance: 60, duration: 1 }" />
+      <section id="about">
+        <AboutSection v-scroll-reveal="{ direction: 'up', distance: 60, duration: 1 }" />
+      </section>
       
       <!-- Séparateur entre sections -->
       <AnimatedSectionDivider type="gradient" height="medium" />
       
-      <ExperienceSection v-scroll-reveal="{ direction: 'up', distance: 80, duration: 1.2, delay: 0.2 }" />
+      <section id="experience">
+        <ExperienceSection v-scroll-reveal="{ direction: 'up', distance: 80, duration: 1.2, delay: 0.2 }" />
+      </section>
     </main>
     
     <!-- Footer -->
@@ -61,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import ParticlesBackground from '@/components/effects/ParticlesBackground.vue'
 import AppNavigation from '@/components/layout/AppNavigation.vue'
 import HeroSection from '@/components/sections/HeroSection.vue'
@@ -78,6 +84,9 @@ import { useMicroInteractions, vMicroInteraction } from '@/composables/useMicroI
 import { useCustomCursor, vCursorInteractive } from '@/composables/useCustomCursor'
 import { useScrollAnimations, vScrollReveal, vParallax } from '@/composables/useScrollAnimations'
 import { usePerformanceOptimization } from '@/composables/usePerformanceOptimization'
+import { useMorphingBackgrounds } from '@/composables/useMorphingBackgrounds'
+import { useMultiLayerParallax } from '@/composables/useMultiLayerParallax'
+import { useScrollTriggeredAnimations } from '@/composables/useScrollTriggeredAnimations'
 
 // Initialisation des composables
 const { enhanceFocusVisibility, setupKeyboardNavigation } = useAccessibility()
@@ -86,6 +95,37 @@ const { } = useMicroInteractions()
 const { initCursor } = useCustomCursor()
 const { initScrollAnimations } = useScrollAnimations()
 const { initPerformanceOptimizations, animationQuality } = usePerformanceOptimization()
+
+// Référence pour le conteneur principal
+const appContainer = ref<HTMLElement | null>(null)
+const { currentTheme, isTransitioning, applyTheme } = useMorphingBackgrounds(appContainer, {
+  sections: [
+    { selector: '#hero', theme: { id: 'hero' } as any },
+    { selector: '#about', theme: { id: 'about' } as any },
+    { selector: '#experience', theme: { id: 'experience' } as any }
+  ],
+  enableParticles: true,
+  enableShapes: true
+})
+
+// Parallax multi-couches
+const { parallaxLayers, isInitialized: parallaxInitialized } = useMultiLayerParallax(appContainer, {
+  enableMouseParallax: true,
+  mouseIntensity: 0.15,
+  enableAutoFloat: true,
+  floatDuration: 6,
+  enableDepthOfField: true,
+  maxBlur: 2,
+  enablePerspective: true
+})
+
+// Animations déclenchées par le scroll
+const { } = useScrollTriggeredAnimations(appContainer, {
+  globalOptions: {
+    markers: false,
+    normalizeScroll: true
+  }
+})
 
 // Initialisation au montage du composant
 onMounted(async () => {
@@ -102,6 +142,8 @@ onMounted(async () => {
   // Initialiser le curseur personnalisé et les animations de scroll
   initCursor()
   initScrollAnimations()
+  
+  // Les arrière-plans morphing s'initialisent automatiquement
   
   // Simuler un temps de chargement adapté à la performance de l'appareil
   const loadingDuration = animationQuality.value === 'low' ? 800 : animationQuality.value === 'medium' ? 1200 : 1500

@@ -1,7 +1,7 @@
 <template>
   <nav 
     ref="navRef" 
-    class="navigation" 
+    class="navigation liquid-navigation" 
     :class="{ 'navigation--scrolled': isScrolled, 'navigation--hidden': isHidden }"
   >
     <div class="navigation__container">
@@ -36,19 +36,37 @@
         <nav class="menu-nav">
           <ul class="menu-nav__list">
             <li class="menu-nav__item">
-              <a href="#about" class="menu-nav__link" @click="scrollToSectionAndClose('about')">
+              <a 
+                href="#about" 
+                class="menu-nav__link" 
+                :class="{ active: activeItem === 'about' }"
+                data-nav-id="about"
+                @click="handleLiquidNavClick('about', $event)"
+              >
                 <span class="menu-nav__number">01</span>
                 <span class="menu-nav__text">About</span>
               </a>
             </li>
             <li class="menu-nav__item">
-              <a href="#experience" class="menu-nav__link" @click="scrollToSectionAndClose('experience')">
+              <a 
+                href="#experience" 
+                class="menu-nav__link" 
+                :class="{ active: activeItem === 'experience' }"
+                data-nav-id="experience"
+                @click="handleLiquidNavClick('experience', $event)"
+              >
                 <span class="menu-nav__number">02</span>
                 <span class="menu-nav__text">Experience</span>
               </a>
             </li>
             <li class="menu-nav__item">
-              <a href="#contact" class="menu-nav__link" @click="scrollToSectionAndClose('contact')">
+              <a 
+                href="#contact" 
+                class="menu-nav__link" 
+                :class="{ active: activeItem === 'contact' }"
+                data-nav-id="contact"
+                @click="handleLiquidNavClick('contact', $event)"
+              >
                 <span class="menu-nav__number">03</span>
                 <span class="menu-nav__text">Contact</span>
               </a>
@@ -80,14 +98,28 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useScroll } from '@/composables/useScroll'
+import { useLiquidNavigation } from '@/composables/useLiquidNavigation'
 
-const navRef = ref<HTMLElement>()
+const navRef = ref<HTMLElement | null>(null)
 const isScrolled = ref(false)
 const isHidden = ref(false)
 const isMobileMenuOpen = ref(false)
 const lastScrollY = ref(0)
 
 const { scrollToSection } = useScroll()
+
+// Navigation liquide
+const { activeItem, handleNavClick } = useLiquidNavigation(navRef, {
+  items: [
+    { id: 'hero', label: 'Accueil', href: '#hero' },
+    { id: 'about', label: 'About', href: '#about' },
+    { id: 'experience', label: 'Experience', href: '#experience' },
+    { id: 'contact', label: 'Contact', href: '#contact' }
+  ],
+  blobColor: '#00ff88',
+  glowEffect: true,
+  rippleEffect: true
+})
 
 // Gérer le scroll pour l'effet de navigation
 const handleScroll = () => {
@@ -121,6 +153,16 @@ const toggleMobileMenu = () => {
 // Fermer le menu mobile lors du clic sur un lien
 const scrollToSectionAndClose = (sectionId: string) => {
   scrollToSection(sectionId)
+  if (isMobileMenuOpen.value) {
+    toggleMobileMenu()
+  }
+}
+
+// Gérer le clic avec navigation liquide
+const handleLiquidNavClick = (itemId: string, event: MouseEvent) => {
+  event.preventDefault()
+  handleNavClick(itemId, event)
+  scrollToSection(itemId)
   if (isMobileMenuOpen.value) {
     toggleMobileMenu()
   }
